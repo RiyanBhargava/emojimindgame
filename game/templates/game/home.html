@@ -1,0 +1,182 @@
+{% extends "game/base.html" %}
+
+{% block content %}
+{% if game_over %}
+    <div class="card result-card {{ reason|lower }}-result fade-in">
+        {% if reason == "time_expired" %}
+            <div class="result-icon">⏰</div>
+            <h1 class="result-title">Time's Up!</h1>
+            <p class="result-message">You ran out of time! Don't worry - every master started as a beginner. 💪</p>
+        {% elif reason == "won_all" %}
+            <div class="result-icon bounce-in">🎉</div>
+            <h1 class="result-title champion">🏆 EmojiMind Champion!</h1>
+            <p class="result-message">Incredible! You conquered all three difficulty levels!</p>
+            <p class="result-note">You've proven your emoji mastery against the AI! 🤖✨</p>
+            <button class="btn btn-success" onclick="addEmojiEffect('🎊'); confetti();">Celebrate! �</button>
+        {% elif reason == "lost_game" %}
+            <div class="result-icon">😤</div>
+            <h1 class="result-title">Game Complete</h1>
+            <p class="result-message">You completed all levels but the AI was tough this time!</p>
+        {% endif %}
+    </div>
+{% else %}
+<div class="hero-section">
+    <h1 class="hero-title bounce-in">🎯 Welcome to EmojiMind!</h1>
+    <p class="hero-subtitle fade-in">Match your emoji creativity with the AI's brainpower!</p>
+    
+    <!-- Game Rules Card -->
+    <div class="card rules-card fade-in">
+        <h2>🎮 Game Rules</h2>
+        <div class="rules-grid">
+            <div class="rule-item">
+                <div class="rule-icon">⏰</div>
+                <div class="rule-text">10 minutes total to complete all challenges</div>
+            </div>
+            <div class="rule-item">
+                <div class="rule-icon">🎯</div>
+                <div class="rule-text">3 difficulty levels to master</div>
+            </div>
+            <div class="rule-item">
+                <div class="rule-icon">🔥</div>
+                <div class="rule-text">3 attempts per level</div>
+            </div>
+            <div class="rule-item">
+                <div class="rule-icon">🏆</div>
+                <div class="rule-text">Win all levels to become champion!</div>
+            </div>
+        </div>
+        
+        <!-- How It Works Section -->
+        <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 2px solid #f0f0f0;">
+            <h3 style="color: var(--primary-dark); margin-bottom: 1rem;">🤖 How the AI Challenge Works:</h3>
+            <div style="text-align: left; color: var(--gray); font-size: 0.95rem; line-height: 1.6;">
+                <p><strong>Easy:</strong> AI generates its top 2 word guesses from your emojis. You win if your target word is among these 2!</p>
+                <p><strong>Medium:</strong> AI generates its top 5 word guesses from your emojis. You win if your target word is among these 5!</p>
+                <p><strong>Hard:</strong> AI generates its top 10 word guesses from your emojis. You win if your target word is among these 10!</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Progress Dashboard -->
+    <div class="card progress-card fade-in">
+        <h2>🚀 Your Mission Progress</h2>
+        <div class="difficulty-list">
+            <div class="difficulty-item level-easy {{ easy_completed|yesno:'completed,' }}{{ easy_won|yesno:'won,' }}">
+                <div class="level-info">
+                    <span class="difficulty-emoji">😊</span>
+                    <div class="level-details">
+                        <span class="difficulty-name">Easy Level</span>
+                        <span class="level-description">AI guesses 2 words - Your answer must be in top 2!</span>
+                    </div>
+                </div>
+                <div class="level-status">
+                    {% if easy_completed %}
+                        {% if easy_won %}
+                            <span class="status-badge win">✅ Mastered</span>
+                        {% else %}
+                            <span class="status-badge loss">❌ Defeated</span>
+                        {% endif %}
+                    {% else %}
+                        <a href="{% url 'play' 'easy' %}" class="btn btn-outline pulse">⭐ Start</a>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="difficulty-item level-medium {{ medium_completed|yesno:'completed,' }}{{ medium_won|yesno:'won,' }}">
+                <div class="level-info">
+                    <span class="difficulty-emoji">🤔</span>
+                    <div class="level-details">
+                        <span class="difficulty-name">Medium Level</span>
+                        <span class="level-description">AI guesses 5 words - Your answer must be in top 5!</span>
+                    </div>
+                </div>
+                <div class="level-status">
+                    {% if medium_completed %}
+                        {% if medium_won %}
+                            <span class="status-badge win">✅ Mastered</span>
+                        {% else %}
+                            <span class="status-badge loss">❌ Defeated</span>
+                        {% endif %}
+                    {% else %}
+                        <a href="{% url 'play' 'medium' %}" class="btn btn-outline pulse">⭐ Challenge</a>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="difficulty-item level-hard {{ hard_completed|yesno:'completed,' }}{{ hard_won|yesno:'won,' }}">
+                <div class="level-info">
+                    <span class="difficulty-emoji">😤</span>
+                    <div class="level-details">
+                        <span class="difficulty-name">Hard Level</span>
+                        <span class="level-description">AI guesses 10 words - Your answer must be in top 10!</span>
+                    </div>
+                </div>
+                <div class="level-status">
+                    {% if hard_completed %}
+                        {% if hard_won %}
+                            <span class="status-badge win">✅ Mastered</span>
+                        {% else %}
+                            <span class="status-badge loss">❌ Defeated</span>
+                        {% endif %}
+                    {% else %}
+                        <a href="{% url 'play' 'hard' %}" class="btn btn-outline pulse">⭐ Conquer</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Motivation Section -->
+    <div class="card motivation-card fade-in">
+        <h3>💡 Ready to Challenge the AI?</h3>
+        <p class="motivation-text">
+            Every emoji tells a story, and every story is a battle of wits! 
+            Can you think like the AI and predict its guesses? 🤖⚡
+        </p>
+        <div class="motivation-stats">
+            <div class="stat-item">
+                <div class="stat-number">🎯</div>
+                <div class="stat-label">Strategic Thinking</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number">⚡</div>
+                <div class="stat-label">Quick Reflexes</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number">🧠</div>
+                <div class="stat-label">Pattern Recognition</div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Add celebration effects for champions -->
+<script>
+    {% if reason == "won_all" %}
+    // Automatic celebration for champions
+    setTimeout(() => {
+        addEmojiEffect('🏆');
+        setTimeout(() => addEmojiEffect('🎊'), 500);
+        setTimeout(() => addEmojiEffect('✨'), 1000);
+    }, 1000);
+    {% endif %}
+
+    // Add interactive hover effects
+    document.addEventListener('DOMContentLoaded', function() {
+        const levelItems = document.querySelectorAll('.difficulty-item');
+        levelItems.forEach(item => {
+            item.addEventListener('mouseenter', function() {
+                if (!this.classList.contains('completed')) {
+                    this.style.transform = 'translateY(-5px) scale(1.02)';
+                    this.style.boxShadow = '0 10px 30px rgba(102, 126, 234, 0.3)';
+                }
+            });
+            item.addEventListener('mouseleave', function() {
+                this.style.transform = 'translateY(0) scale(1)';
+                this.style.boxShadow = 'var(--shadow)';
+            });
+        });
+    });
+</script>
+{% endblock %}

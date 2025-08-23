@@ -1,0 +1,270 @@
+{% extends "game/base.html" %}
+
+{% block content %}
+<div class="result-container fade-in">
+    <!-- Result Header -->
+    <div class="card result-header">
+        <div class="difficulty-badge difficulty-{{ difficulty }}">
+            {% if difficulty == 'easy' %}😊 Easy
+            {% elif difficulty == 'medium' %}🤔 Medium  
+            {% else %}😤 Hard{% endif %} Level
+        </div>
+        {% if not expired %}
+            <div class="result-timer">
+                <span id="timer_display">⏰ 00:00</span>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Main Result Card -->
+    <div class="card result-card {{ win|yesno:'win,loss' }}">
+        <div class="result-icon">
+            {% if win %}🎉
+            {% elif expired %}⏰
+            {% else %}😓{% endif %}
+        </div>
+        
+        <h2 class="result-title">
+            {% if win %}Victory! 🏆
+            {% elif expired %}Time's Up! ⏰
+            {% else %}Try Again! 💪{% endif %}
+        </h2>
+        
+        <p class="result-message">
+            {% if win %}
+                The AI successfully guessed your word! Excellent strategy! 🧠✨
+            {% elif expired %}
+                Time ran out during this challenge. Every second counts in EmojiMind! 
+            {% else %}
+                The AI couldn't crack your emoji code this time. Ready for another attempt? 🤖
+            {% endif %}
+        </p>
+    </div>
+
+    <!-- Challenge Details -->
+    <div class="card challenge-details">
+        <h3>📊 Challenge Breakdown</h3>
+        <div class="detail-grid">
+            <div class="detail-item">
+                <div class="detail-label">Your Target</div>
+                <div class="detail-value word-display">{{ word|title }}</div>
+            </div>
+            <div class="detail-item">
+                <div class="detail-label">Your Emojis</div>
+                <div class="detail-value emoji-display">{{ emojis }}</div>
+            </div>
+            <div class="detail-item">
+                <div class="detail-label">Attempts Used</div>
+                <div class="detail-value">{{ tries }}/3</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- AI Guesses -->
+    <div class="card ai-guesses">
+        <h3>🤖 AI's Battle Strategy</h3>
+        <div class="guesses-list">
+            {% for guess in ai_guesses %}
+                <div class="guess-item {% if guess == word %}correct{% else %}incorrect{% endif %}">
+                    <div class="guess-number">{{ forloop.counter }}</div>
+                    <div class="guess-text">"{{ guess }}"</div>
+                    <div class="guess-status">
+                        {% if guess == word %}🎯{% else %}❌{% endif %}
+                    </div>
+                </div>
+            {% empty %}
+                <div class="guess-item no-guesses">
+                    <div class="guess-icon">🤔</div>
+                    <div class="guess-text">AI couldn't generate any guesses</div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Progress & Next Steps -->
+    <div class="card progress-section">
+        {% if difficulty_complete %}
+            <div class="completion-badge">
+                <span class="completion-icon">✅</span>
+                <span class="completion-text">{{ difficulty|title }} Level Completed!</span>
+            </div>
+        {% endif %}
+
+        {% if show_next_difficulty %}
+            <div class="alert alert-success">
+                <div class="alert-icon">🚀</div>
+                <div class="alert-content">
+                    <strong>Level Up!</strong> You've conquered {{ difficulty }} difficulty!
+                    Ready for the next challenge?
+                </div>
+            </div>
+        {% endif %}
+
+        <!-- Action Buttons -->
+        <div class="action-buttons">
+            {% if show_try_again %}
+                <a href="{% url 'play' difficulty %}" class="btn btn-primary pulse" onclick="addEmojiEffect('🎯')">
+                    🔄 Try Again
+                </a>
+            {% endif %}
+            
+            <a href="{% url 'home' %}" class="btn btn-outline">
+                🏠 Back to Home
+            </a>
+        </div>
+    </div>
+
+    <!-- Performance Insights -->
+    <div class="card insights-card fade-in">
+        <h3>💡 Performance Insights</h3>
+        <div class="insights-grid">
+            <div class="insight-item">
+                <div class="insight-icon">
+                    {% if win %}🎯{% else %}🎲{% endif %}
+                </div>
+                <div class="insight-text">
+                    {% if win %}
+                        Perfect emoji choice! Your clues led the AI directly to the answer.
+                    {% else %}
+                        The AI found your emoji combination challenging. Try more specific clues!
+                    {% endif %}
+                </div>
+            </div>
+            <div class="insight-item">
+                <div class="insight-icon">⚡</div>
+                <div class="insight-text">
+                    {% if tries == 1 %}
+                        Lightning fast! You got it on the first try.
+                    {% elif tries == 2 %}
+                        Good efficiency - solved in 2 attempts!
+                    {% else %}
+                        Used all attempts - persistence pays off!
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Enhanced Timer Script -->
+{% if timer and not expired %}
+<script>
+    const startTime = new Date("{{ timer }}").getTime();
+    const endTime = startTime + 10*60*1000;
+    
+    function updateTimerDisplay() {
+        const now = new Date().getTime();
+        let distance = endTime - now;
+        if (distance < 0) distance = 0;
+        
+        const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+        
+        const timerElement = document.getElementById("timer_display");
+        const timeString = ("0"+minutes).slice(-2) + ":" + ("0"+seconds).slice(-2);
+        
+        // Add urgency styling
+        if (distance < 60000) { // Last minute
+            timerElement.innerHTML = "🚨 " + timeString;
+            timerElement.style.color = "#ff4757";
+        } else if (distance < 180000) { // Last 3 minutes  
+            timerElement.innerHTML = "⏰ " + timeString;
+            timerElement.style.color = "#ffa502";
+        } else {
+            timerElement.innerHTML = "⏰ " + timeString;
+        }
+        
+        if (distance > 0) {
+            setTimeout(updateTimerDisplay, 1000);
+        } else {
+            timerElement.innerHTML = "⏰ Time's Up!";
+            // Show countdown to redirect
+            let countdown = 3;
+            const redirectCountdown = setInterval(() => {
+                timerElement.innerHTML = `🏠 Returning home in ${countdown}...`;
+                countdown--;
+                if (countdown < 0) {
+                    clearInterval(redirectCountdown);
+                    window.location.href = "{% url 'home' %}";
+                }
+            }, 1000);
+        }
+    }
+    updateTimerDisplay();
+</script>
+{% endif %}
+
+<!-- Result-specific effects -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Celebrate wins with effects
+        {% if win %}
+            setTimeout(() => {
+                addEmojiEffect('🎉');
+                setTimeout(() => addEmojiEffect('🏆'), 500);
+                setTimeout(() => addEmojiEffect('✨'), 1000);
+            }, 500);
+        {% endif %}
+
+        // Add hover effects to guess items
+        const guessItems = document.querySelectorAll('.guess-item');
+        guessItems.forEach(item => {
+            item.addEventListener('mouseenter', function() {
+                if (this.classList.contains('correct')) {
+                    this.style.transform = 'scale(1.05)';
+                    this.style.boxShadow = '0 8px 25px rgba(46, 213, 115, 0.3)';
+                }
+            });
+            item.addEventListener('mouseleave', function() {
+                this.style.transform = 'scale(1)';
+                this.style.boxShadow = 'var(--shadow)';
+            });
+        });
+    });
+</script>
+
+<style>
+    /* Result-specific styles */
+    .result-card.win {
+        background: linear-gradient(135deg, rgba(46, 213, 115, 0.1), rgba(0, 206, 201, 0.1));
+        border-color: var(--success);
+    }
+    
+    .result-card.loss {
+        background: linear-gradient(135deg, rgba(255, 71, 87, 0.1), rgba(255, 165, 2, 0.1));
+        border-color: var(--warning);
+    }
+    
+    .guess-item.correct {
+        background: linear-gradient(135deg, rgba(46, 213, 115, 0.2), rgba(0, 206, 201, 0.2));
+        border-color: var(--success);
+    }
+    
+    .guess-item.incorrect {
+        background: rgba(255, 255, 255, 0.05);
+    }
+    
+    .word-display {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: var(--primary);
+    }
+    
+    .emoji-display {
+        font-size: 2rem;
+        letter-spacing: 0.5rem;
+    }
+    
+    .completion-badge {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 1rem;
+        background: linear-gradient(135deg, var(--success), var(--primary));
+        color: white;
+        border-radius: var(--border-radius);
+        margin-bottom: 1rem;
+        font-weight: bold;
+    }
+</style>
+{% endblock %}

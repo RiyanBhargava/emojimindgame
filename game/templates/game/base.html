@@ -1,0 +1,129 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EmojiMind - AI Emoji Guessing Game</title>
+    <link rel="stylesheet" type="text/css" href="{% static 'game/style.css' %}">
+    <meta name="description" content="Challenge the AI in this fun emoji guessing game!">
+    <meta name="theme-color" content="#667eea">
+    <!-- PWA and mobile optimization -->
+    <link rel="apple-touch-icon" sizes="180x180" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎯</text></svg>">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+</head>
+<body>
+    <div class="container">
+        <!-- Navigation -->
+        <nav class="navbar fade-in">
+            <a href="{% url 'home' %}" class="navbar-brand">🎯 EmojiMind</a>
+            <div class="navbar-nav">
+                {% if user.is_authenticated %}
+                    <span class="navbar-link">Welcome, {{ user.first_name|default:user.username }}! 👋</span>
+                    <a href="/accounts/logout/" class="navbar-link">Logout</a>
+                {% else %}
+                    <a href="/accounts/login/" class="navbar-link">Sign In</a>
+                    <a href="/accounts/signup/" class="navbar-link">Sign Up</a>
+                {% endif %}
+            </div>
+        </nav>
+
+        <!-- Global Timer -->
+        {% if request.session.start_time %}
+        <div id="global-timer" class="timer fade-in">
+            <span id="timer-display">Time Left: 00:00</span>
+        </div>
+        <script>
+            const startTime = new Date("{{ request.session.start_time }}").getTime();
+            const endTime = startTime + 10*60*1000; // 10 minutes in ms
+
+            function updateGlobalTimer() {
+                const now = new Date().getTime();
+                let distance = endTime - now;
+                if (distance < 0) distance = 0;
+                const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+                document.getElementById("timer-display").innerHTML =
+                    "⏰ Time Left: " + ("0"+minutes).slice(-2) + ":" + ("0"+seconds).slice(-2);
+                if (distance > 0) {
+                    setTimeout(updateGlobalTimer, 1000);
+                } else {
+                    document.getElementById("timer-display").innerHTML = "⏰ Time Up!";
+                    // Show time up notification
+                    if ('Notification' in window && Notification.permission === 'granted') {
+                        new Notification('EmojiMind', {
+                            body: 'Time is up! Game over.',
+                            icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">⏰</text></svg>'
+                        });
+                    }
+                }
+            }
+            
+            // Request notification permission
+            if ('Notification' in window && Notification.permission === 'default') {
+                Notification.requestPermission();
+            }
+            
+            updateGlobalTimer();
+        </script>
+        {% endif %}
+
+        <!-- Main Content -->
+        <main class="fade-in">
+            {% block content %}{% endblock %}
+        </main>
+
+        <!-- Footer -->
+        <footer style="text-align: center; padding: 2rem 0; color: rgba(255,255,255,0.7); font-size: 0.875rem;">
+            <p>Made with ❤️ for emoji lovers | Challenge the AI! 🤖</p>
+        </footer>
+    </div>
+
+    <!-- Add some interactive elements -->
+    <script>
+        // Add touch feedback for mobile
+        document.addEventListener('DOMContentLoaded', function() {
+            const buttons = document.querySelectorAll('.btn');
+            buttons.forEach(button => {
+                button.addEventListener('touchstart', function() {
+                    this.style.transform = 'scale(0.95)';
+                });
+                button.addEventListener('touchend', function() {
+                    this.style.transform = 'scale(1)';
+                });
+            });
+
+            // Add emoji burst effect on successful actions
+            window.addEmojiEffect = function(emoji = '🎉') {
+                const emojis = [emoji, '✨', '🎊', '🎈'];
+                for (let i = 0; i < 5; i++) {
+                    setTimeout(() => {
+                        const span = document.createElement('span');
+                        span.innerHTML = emojis[Math.floor(Math.random() * emojis.length)];
+                        span.style.position = 'fixed';
+                        span.style.fontSize = '2rem';
+                        span.style.zIndex = '9999';
+                        span.style.pointerEvents = 'none';
+                        span.style.left = Math.random() * window.innerWidth + 'px';
+                        span.style.top = '100vh';
+                        span.style.animation = 'float-up 3s ease-out forwards';
+                        document.body.appendChild(span);
+                        setTimeout(() => span.remove(), 3000);
+                    }, i * 200);
+                }
+            };
+        });
+
+        // Add floating animation for emoji effects
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes float-up {
+                0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+                100% { transform: translateY(-100vh) rotate(360deg); opacity: 0; }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>
