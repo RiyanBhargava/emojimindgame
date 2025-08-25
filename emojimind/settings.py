@@ -5,7 +5,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'your-secret-key')
 DEBUG = True
-ALLOWED_HOSTS = []
+# Get ALLOWED_HOSTS from environment variable
+ALLOWED_HOSTS_ENV = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1')
+ALLOWED_HOSTS = [host.strip() for host in ALLOWED_HOSTS_ENV.split(',') if host.strip()]
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -44,8 +46,7 @@ ROOT_URLCONF = 'emojimind.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [r"C:\\Users\\riyan\\OneDrive\\Desktop\\IEI BPDC\\emojimind\\game\\templates"]
-,
+        'DIRS': [BASE_DIR / 'game' / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
